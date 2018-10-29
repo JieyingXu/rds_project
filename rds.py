@@ -44,6 +44,20 @@ def create_table():
     cnx.close()
 
 
+def getmaxid():
+    """
+    get the largest transaction_id from transaction table
+    :return: the largest transaction_id
+    """
+    cnx = mysql.connector.connect(user='root', password='Jiang0814', host='35.185.39.95')
+    cursor = cnx.cursor()
+    cursor.execute("USE rds")
+    cursor.execute("SELECT MAX(transaction_id) from transaction")
+    for transactionid in cursor:
+        maxid = transactionid
+    result = maxid[0]
+    return result
+
 def insert_transaction(dic):
     """
     insert a transaction record to the transaction table
@@ -110,9 +124,11 @@ if __name__ == "__main__":
     }
     insert_transaction(dic)
     dic = {
-        'transaction_id': 1001,
+        'transaction_id': 0,
         'product_type': 'pants',
         'number': 8
     }
+    mmm = getmaxid()
+    dic['transaction_id'] = mmm + 1
     insert_transaction(dic)
     insert_transaction(dic)
