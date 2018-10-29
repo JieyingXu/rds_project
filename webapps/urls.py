@@ -21,5 +21,6 @@ from onlineShop import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    url(r'^onlineShop$', views.home),
+    url(r'^online_shop$', views.home),
+    url(r'^make_transaction$', views.make_transaction)
 ]
