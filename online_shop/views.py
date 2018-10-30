@@ -10,8 +10,8 @@ def home(request):
 	remain_pants_number = get_remains("pants")
 	context = {}
 	context["form"] = transaction_form
-	context["remain_shoes_number"] = remain_shoes_number
-	context["remain_pants_number"] = remain_pants_number
+	context["shoes_number"] = remain_shoes_number
+	context["pants_number"] = remain_pants_number
 	return render(request, 'online_shop/index.html', context)
 
 def make_transaction(request):
@@ -30,9 +30,9 @@ def make_transaction(request):
 			remain_pants_number = get_remains("pants")
 			context = {}
 			context["form"] = TransactionForm()
-			context["remain_shoes_number"] = remain_shoes_number
-			context["remain_pants_number"] = remain_pants_number
-			
+			context["shoes_number"] = remain_shoes_number
+			context["pants_number"] = remain_pants_number
+
 			if response['number'] == -1:
 				context["message"] = 'Database Error: Insertion Failed!'
 			else:
