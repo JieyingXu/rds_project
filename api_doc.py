@@ -17,5 +17,5 @@ def insert_transaction(dic):
     will ignore duplicated transaction id and catch exception
     :param dic: a dictionary with fields (transaction_id, product_type, number)
     :return: a dictionary which shows the remain number of the product you insert
-             (product_type, number). number = -1 if the insert operation is wrong
+             (product_type, number).e number = -1 if the insert operation is wrong
     """

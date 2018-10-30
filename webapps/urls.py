@@ -17,10 +17,10 @@ from django.contrib import admin
 from django.urls import path
 from django.conf.urls import url
 
-from onlineShop import views
+from online_shop import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    url(r'^online_shop$', views.home),
-    url(r'^make_transaction$', views.make_transaction)
+    url(r'^home$', views.home,name='home'),
+    url(r'^make_transaction$', views.make_transaction, name='make_transaction')
 ]
