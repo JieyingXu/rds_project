@@ -70,7 +70,7 @@ def insert_transaction(dic):
         remain_result = remain_result[0]
         return_dic = {
             'product_type': product_type,
-            'remains': remain_result
+            'number': remain_result
         }
         cursor.close()
         cnx.close()
@@ -81,7 +81,7 @@ def insert_transaction(dic):
         product_type = dic.get('product_type')
         return_dic = {
             'product_type': product_type,
-            'remains': -1
+            'number': -1
         }
         cursor.close()
         cnx.close()
