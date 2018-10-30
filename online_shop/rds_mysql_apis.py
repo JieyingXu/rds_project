@@ -2,7 +2,7 @@ import json
 import mysql.connector
 
 
-def getmaxid():
+def get_maxid():
     """
     get the largest transaction_id from transaction table, first time call it will return 1000
     :return: the largest transaction_id
@@ -25,10 +25,10 @@ def getmaxid():
     return result
 
 
-def getremains(product_type):
+def get_remains(product_type):
     """
     get remain number of a certain product
-    :param product_type: the type you want to query
+    :param product_type: the type you want to query, it should be a string('shoes' or 'pants')
     :return: the number of this product
     """
     cnx = mysql.connector.connect(user='root', password='Jiang0814', host='35.185.39.95')
