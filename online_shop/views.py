@@ -6,8 +6,8 @@ from rds_mysql_apis import *
 # Create your views here.
 def home(request):
 	transaction_form = TransactionForm()
-	remain_shoes_number = 10
-	remain_pants_number = 10
+	remain_shoes_number = get_remains("shoes")
+	remain_pants_number = get_remains("pants")
 	context = {}
 	context["form"] = transaction_form
 	context["remain_shoes_number"] = remain_shoe_number
@@ -24,6 +24,8 @@ def make_transaction(request):
 			transaction_row['number'] = form.cleaned_data['product_number']
 			response = insert_transaction(transaction_row)
 			
+			remain_shoes_number = get_remains("shoes")
+			remain_pants_number = get_remains("pants")
 			context = {}
 			context["form"] = TransactionForm()
 			context["remain_shoes_number"] = remain_shoe_number
