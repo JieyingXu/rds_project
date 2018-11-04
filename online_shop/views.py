@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from online_shop.forms import *
-from online_shop.rds_mysql_apis import * 
+from online_shop.rds_mysql_apis import *
+from django.http import HttpResponse
 
 # Database APIs waiting to be implemented.
 # Create your views here.
@@ -40,4 +41,7 @@ def make_transaction(request):
 				(number, product_type)
 			return render(request, 'online_shop/index.html', context)
 
+def detect(request):
+	print("I am alive!")
+	return HttpResponse("Alive", content_type="text/plain")
 
