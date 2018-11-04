@@ -17,7 +17,7 @@ from django.contrib import admin
 from django.urls import path
 from django.conf.urls import url
 
-from online_shop import views
+from proxy_server import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
