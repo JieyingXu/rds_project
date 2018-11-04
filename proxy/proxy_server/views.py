@@ -62,14 +62,13 @@ def make_transaction(request):
         return HttpResponse("Make Transaction Cannot Accept GET Request", content_type="text/plain")
 
 def detect(request):
-    try:
-        response = requests.get(SERVER_IP_LIST[0]+'/detect')
-        json_res = response.json()
-        if json_res['code'] == '1':
-            return JsonResponse({'code':'1'})
-        else:
-            return JsonResponse({'code':'Unknown Error'})
-    except:
-        return JsonResponse({'code':'0'})
+    count = 0
+    for ip in SERVER_IP_LIST:
+        try:
+            requests.get(ip+'/detect')
+            count += 1
+        except:
+            continue
+    return JsonResponse({'count': str(count)})
 
 
