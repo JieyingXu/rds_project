@@ -1,7 +1,6 @@
 from django.shortcuts import render
 # from server.online_shop.forms import *
 from online_shop.rds_mysql_apis import *
-from django.http import HttpResponse
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
@@ -42,6 +41,5 @@ def make_transaction(request):
 
 def detect(request):
     # print("I am alive!")
-    context = {'code': '1'}
-    return HttpResponse("Alive", content_type="text/plain")
+    return JsonResponse({'code':'1'})
 
