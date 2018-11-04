@@ -13,7 +13,7 @@
 	    {% if message %}
             <br />
 	        <div class="message" style="color:blue;">
-	            {{message}}
+	            {{ message }}
 	        </div>
 	    {% endif %}
 
@@ -23,8 +23,8 @@
 		        <table>
 		            {% for field in form.visible_fields %}
 		                <tr>
-		                    <td>{{field.label_tag}}</td>
-		                    <td>{{field}}</td>
+		                    <td>{{ field.label_tag }}</td>
+		                    <td>{{ field }}</td>
 		                    <!-- <td class="error">
 {#		                        {% for error in field.errors %} {{error}} {% endfor %}#}
 		                    </td> -->
@@ -38,13 +38,17 @@
             <br />
             <br />
         	<table>
+                <tr>
+                    <td>HeartBeat Interval</td>
+                    <td>{{ interval }} seconds</td>
+                </tr>
         		<tr>
         			<td>Remaining Shoes</td>
-        			<td>{{shoes_number}}</td>
+        			<td>{{ shoes_number }}</td>
         		</tr>
         		<tr>
         			<td>Remaining Pants</td>
-        			<td>{{pants_number}}</td>
+        			<td>{{ pants_number }}</td>
         		</tr>
         	</table>
 
