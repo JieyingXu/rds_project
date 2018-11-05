@@ -6,8 +6,8 @@ import requests
 # Create your views here.
 SERVER_IP_LIST = ["http://127.0.0.1:8008", "http://127.0.0.1:8080"]
 
-def home(request):
-    interval = request.GET.get('interval')
+def home(request, interval):
+    # interval = request.GET.get('interval')
     for ip in SERVER_IP_LIST:
         try:
             response = requests.get(ip+"/home")
