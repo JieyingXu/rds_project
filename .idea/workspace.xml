@@ -4,7 +4,6 @@
     <list default="true" id="e9a3f590-a564-4a34-9d49-f29f5909d3e1" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/proxy/proxy_server/templates/proxy_server/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/proxy/proxy_server/templates/proxy_server/index.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/proxy/proxy_server/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/proxy/proxy_server/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/proxy/webapps/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/proxy/webapps/urls.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -36,14 +35,14 @@
       </usages-collector>
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
-          <entry key="html" value="123" />
-          <entry key="py" value="2351" />
+          <entry key="html" value="124" />
+          <entry key="py" value="2432" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
-          <entry key="HTML" value="123" />
-          <entry key="Python" value="2351" />
+          <entry key="HTML" value="124" />
+          <entry key="Python" value="2432" />
         </counts>
       </usages-collector>
     </session>
@@ -71,10 +70,11 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/proxy/proxy_server/templates/proxy_server/index.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="630">
-              <caret line="42" column="51" lean-forward="true" selection-start-line="42" selection-start-column="51" selection-end-line="42" selection-end-column="51" />
+            <state relative-caret-position="426">
+              <caret line="39" column="19" lean-forward="true" selection-start-line="39" selection-start-column="19" selection-end-line="39" selection-end-column="19" />
               <folding>
                 <element signature="n#style#0;n#div#1;n#body#0;n#html#0;n#!!top" expanded="true" />
+                <element signature="n#style#0;n#tr#0;n#table#0;n#div#1;n#body#0;n#html#0;n#!!top" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -100,14 +100,14 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/proxy/proxy_server/views.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="150">
-              <caret line="10" column="29" lean-forward="true" selection-start-line="10" selection-start-column="29" selection-end-line="10" selection-end-column="29" />
+            <state relative-caret-position="1050">
+              <caret line="70" column="12" lean-forward="true" selection-start-line="70" selection-start-column="12" selection-end-line="70" selection-end-column="12" />
               <folding>
                 <element signature="e#0#35#0" expanded="true" />
-                <marker date="1541378567107" expanded="true" signature="348:1261" ph="..." />
-                <marker date="1541378567107" expanded="true" signature="1291:1292" ph="..." />
-                <marker date="1541378567107" expanded="true" signature="1291:2881" ph="..." />
-                <marker date="1541378567107" expanded="true" signature="3106:3108" ph="..." />
+                <marker date="1541378971065" expanded="true" signature="405:1318" ph="..." />
+                <marker date="1541378971065" expanded="true" signature="1348:1349" ph="..." />
+                <marker date="1541378971065" expanded="true" signature="1348:2989" ph="..." />
+                <marker date="1541378971065" expanded="true" signature="3214:3216" ph="..." />
               </folding>
             </state>
           </provider>
@@ -148,8 +148,8 @@
         <option value="$PROJECT_DIR$/server/webapps/settings.py" />
         <option value="$PROJECT_DIR$/proxy/webapps/settings.py" />
         <option value="$PROJECT_DIR$/server/online_shop/views.py" />
-        <option value="$PROJECT_DIR$/proxy/proxy_server/views.py" />
         <option value="$PROJECT_DIR$/proxy/webapps/urls.py" />
+        <option value="$PROJECT_DIR$/proxy/proxy_server/views.py" />
         <option value="$PROJECT_DIR$/proxy/proxy_server/templates/proxy_server/index.html" />
       </list>
     </option>
@@ -161,10 +161,8 @@
     <sorting>DEFINITION_ORDER</sorting>
   </component>
   <component name="ProjectFrameBounds" fullScreen="true">
-    <option name="x" value="126" />
-    <option name="y" value="57" />
-    <option name="width" value="1106" />
-    <option name="height" value="712" />
+    <option name="width" value="1280" />
+    <option name="height" value="800" />
   </component>
   <component name="ProjectView">
     <navigator proportions="" version="1">
@@ -291,7 +289,7 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="0" y="0" width="1280" height="800" extended-state="0" />
+    <frame x="0" y="0" width="1280" height="800" extended-state="6" />
     <editor active="true" />
     <layout>
       <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.21890146" />
@@ -397,20 +395,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/proxy/proxy_server/views.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="150">
-          <caret line="10" column="29" lean-forward="true" selection-start-line="10" selection-start-column="29" selection-end-line="10" selection-end-column="29" />
-          <folding>
-            <element signature="e#0#35#0" expanded="true" />
-            <marker date="1541378567107" expanded="true" signature="348:1261" ph="..." />
-            <marker date="1541378567107" expanded="true" signature="1291:1292" ph="..." />
-            <marker date="1541378567107" expanded="true" signature="1291:2881" ph="..." />
-            <marker date="1541378567107" expanded="true" signature="3106:3108" ph="..." />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/proxy/webapps/urls.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="345">
@@ -421,12 +405,27 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/proxy/proxy_server/views.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1050">
+          <caret line="70" column="12" lean-forward="true" selection-start-line="70" selection-start-column="12" selection-end-line="70" selection-end-column="12" />
+          <folding>
+            <element signature="e#0#35#0" expanded="true" />
+            <marker date="1541378971065" expanded="true" signature="405:1318" ph="..." />
+            <marker date="1541378971065" expanded="true" signature="1348:1349" ph="..." />
+            <marker date="1541378971065" expanded="true" signature="1348:2989" ph="..." />
+            <marker date="1541378971065" expanded="true" signature="3214:3216" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/proxy/proxy_server/templates/proxy_server/index.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="630">
-          <caret line="42" column="51" lean-forward="true" selection-start-line="42" selection-start-column="51" selection-end-line="42" selection-end-column="51" />
+        <state relative-caret-position="426">
+          <caret line="39" column="19" lean-forward="true" selection-start-line="39" selection-start-column="19" selection-end-line="39" selection-end-column="19" />
           <folding>
             <element signature="n#style#0;n#div#1;n#body#0;n#html#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#tr#0;n#table#0;n#div#1;n#body#0;n#html#0;n#!!top" expanded="true" />
           </folding>
         </state>
       </provider>

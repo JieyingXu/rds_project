@@ -5,9 +5,12 @@ import requests
 
 # Create your views here.
 SERVER_IP_LIST = ["http://127.0.0.1:8008", "http://127.0.0.1:8080"]
+INTERVAL = 1
 
 def home(request, interval):
     # interval = request.GET.get('interval')
+    global INTERVAL
+    INTERVAL = interval
     for ip in SERVER_IP_LIST:
         try:
             response = requests.get(ip+"/home")
@@ -17,7 +20,7 @@ def home(request, interval):
                 context["form"] = TransactionForm()
                 context["shoes_number"] = json_res["shoes_number"]
                 context["pants_number"] = json_res["pants_number"]
-                context["interval"] = interval
+                context["interval"] = INTERVAL
                 print('Proxy', context)
                 return render(request, 'proxy_server/index.html', context)
             else:
@@ -45,6 +48,7 @@ def make_transaction(request):
                     context["form"] = TransactionForm()
                     context["shoes_number"] = json_res["shoes_number"]
                     context["pants_number"] = json_res["pants_number"]
+                    context["interval"] = INTERVAL
                     if json_res['code'] == -1:
                         context["message"] = 'Database Error: Insertion Failed!'
                     else:
