@@ -2,7 +2,37 @@
 <html>
 	<head>
 	    <meta charset="utf-8">
+	    {% load staticfiles %}
+		<!-- <link href="{% static 'online_shop/index.css' %}" rel="stylesheet" type="text/css"> -->
 		<title> {% block title %} Virtual Online Shop {% endblock %} </title>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+		<script type="text/javascript">
+			window.onload = update;
+			var refresh_interval = 3;
+			// var set_interval = window.setInterval(update, 1000 * refresh_interval);
+			var update = function() {
+				$.ajax({
+					url: "/detect",
+					type: "GET",
+					dataType: "json",
+					success : function(data) {
+						var x = data.count;
+						console.log("count:"+x);
+						document.getElementById("alive_count").innerHTML = x;
+					}
+				});
+			};
+			update();
+			var set_interval = window.setInterval(update, 1000 * refresh_interval);
+
+			var get_interval = function() {
+				clearInterval(set_interval);
+				var new_interval = parseInt(document.getElementById("interval").value);
+				// console.log(new_interval);
+				set_interval = window.setInterval(update, 1000 * new_interval);
+				update();
+			}
+		</script>
 	</head>
 
 	<body>
@@ -40,7 +70,12 @@
         	<table>
                 <tr style="color:blue;">
                     <td>HeartBeat Interval:</td>
-                    <td>{{ interval }} seconds</td>
+                    <td><input id="interval" type="text" value="3">seconds</td>
+                    <td><button onclick="get_interval()">set</button></td>
+                </tr>
+                <tr style="color:blue;">
+                	<td>Number of running server:</td>
+                	<td id="alive_count"></td>
                 </tr>
         		<tr>
         			<td>Remaining Shoes:</td>
