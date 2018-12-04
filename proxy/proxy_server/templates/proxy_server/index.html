@@ -16,9 +16,15 @@
 					type: "GET",
 					dataType: "json",
 					success : function(data) {
-						var x = data.count;
-						console.log("count:"+x);
-						document.getElementById("alive_count").innerHTML = x;
+						var alive = data.alive_count;
+						var dead = data.dead_count;
+						var res_alive_ip = data.alive_IP;
+						var res_dead_ip = data.dead_IP;
+						console.log("alive:"+alive);
+						document.getElementById("alive_count").innerHTML = alive;
+						document.getElementById("dead_count").innerHTML = dead;
+						document.getElementById("alive_ip_addr").innerHTML = res_alive_ip;
+						document.getElementById("dead_ip_addr").innerHTML = res_dead_ip;
 					}
 				});
 			};
@@ -73,9 +79,17 @@
                     <td><input id="interval" type="text" value="3">seconds</td>
                     <td><button onclick="get_interval()">set</button></td>
                 </tr>
-                <tr style="color:blue;">
-                	<td>Number of running server:</td>
+                <tr>
+                	<td  style="color:blue;">Number of running server:</td>
                 	<td id="alive_count"></td>
+                	<td  style="color:blue;">IP:</td>
+                	<td id="alive_ip_addr"></td>
+                </tr>
+                <tr>
+                	<td style="color:blue;">Number of dead server:</td>
+                	<td id="dead_count"></td>
+                	<td style="color:blue;">IP:</td>
+                	<td id="dead_ip_addr"></td>
                 </tr>
         		<tr>
         			<td>Remaining Shoes:</td>

@@ -21,7 +21,8 @@ from proxy_server import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    url(r'^home/(?P<interval>\d)+$', views.home,name='home'),
+    # url(r'^home/(?P<interval>\d)+$', views.home,name='home'),
+    url(r'^home$', views.home,name='home'),
     url(r'^make_transaction$', views.make_transaction, name='make_transaction'),
     url(r'^detect$', views.detect, name='detect')
 ]
