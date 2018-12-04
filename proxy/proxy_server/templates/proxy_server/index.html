@@ -25,6 +25,7 @@
 						document.getElementById("dead_count").innerHTML = dead;
 						document.getElementById("alive_ip_addr").innerHTML = res_alive_ip;
 						document.getElementById("dead_ip_addr").innerHTML = res_dead_ip;
+						document.getElementById("master").innerHTML = data.master;
 					}
 				});
 			};
@@ -91,6 +92,7 @@
                 	<td style="color:blue;">IP:</td>
                 	<td id="dead_ip_addr"></td>
                 </tr>
+                <tr><td id="master"></td></tr>
         		<tr>
         			<td>Remaining Shoes:</td>
         			<td>{{ shoes_number }}</td>

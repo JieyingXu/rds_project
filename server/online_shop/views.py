@@ -4,7 +4,6 @@ from online_shop.rds_mysql_apis import *
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
-
 # Create your views here.
 def home(request):
     # transaction_form = TransactionForm()

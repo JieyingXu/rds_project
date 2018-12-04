@@ -25,4 +25,6 @@ urlpatterns = [
     url(r'^home$', views.home,name='home'),
     url(r'^make_transaction$', views.make_transaction, name='make_transaction'),
     url(r'^detect$', views.detect, name='detect')
-]
+    ]
+#     url(r'^test$', views.test, name='detect')
+# ]
