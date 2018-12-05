@@ -3,26 +3,39 @@ from proxy_server.forms import *
 from django.http import HttpResponse, JsonResponse
 import requests
 import threading, time
-import os
+import os, json
 
 # Create your views here.
 SERVER_IP_LIST = ["http://127.0.0.1:8008", "http://127.0.0.1:8080", "http://127.0.0.1:8800"]
 MASTER = 0
-
+LOCK = threading.Lock()
 MASTER_SWITCH = 0
+# transaction record inside the list is dictionary with keys:
+# 'type', 'number', 'id'
 REQ_RECORD = []
 CHECKPOINT_FILE = os.path.join('.', 'proxy_checkpoint.csv')
 
 class CheckPointThread(threading.Thread):
     def run(self):
         while True:
-            global SERVER_IP_LIST
+            global SERVER_IP_LIST, LOCK
+            global REQ_RECORD
             global MASTER
-            time.sleep(60)
+            global MASTER_SWITCH
+            time.sleep(10)
+            LOCK.acquire()
             if MASTER_SWITCH == 0:
+                new_master = MASTER
                 for i,ip in enumerate(SERVER_IP_LIST):
-                    if i != MASTER:
+                    if i != new_master:
                         send_checkpoint(ip)
+                with open(CHECKPOINT_FILE, 'a') as f:
+                    for transaction in REQ_RECORD:
+                        row = "%s,%s,%s\n" % (transaction["id"], transaction["type"], transaction["number"])
+                        f.write(row)
+                REQ_RECORD = []
+            LOCK.release()
+
 
 thread1 = CheckPointThread()
 thread1.start()
@@ -33,9 +46,9 @@ def home(request):
     global MASTER
     ip = SERVER_IP_LIST[MASTER]
     try:
-        # payload = {'server_ip':ip}
-        # response = requests.post(ip+'/home', data=payload)
-        response = requests.get(ip+'/home')
+        payload = {'server_ip':ip}
+        response = requests.post(ip+'/home', data=payload)
+        # response = requests.get(ip+'/home')
         json_res = response.json()
         context = {}
         context["form"] = TransactionForm()
@@ -75,20 +88,23 @@ def make_transaction(request):
                 else:
                     context["message"] = 'Transaction %s: %s of %s Succeeded!' % \
                     (new_record['id'], number, product_type)
+                # Append it to current checkpoint list
+                REQ_RECORD.append(new_record)
                 return render(request, 'proxy_server/index.html', context)
-            else:
-                # switch to a new master to complete the pending transaction
-                detect(request)
-                switch_master(SERVER_IP_LIST[MASTER])
-                for i,ip in enumerate(SERVER_IP_LIST):
-                    if i != MASTER:
-                        send_checkpoint(ip)
-                return HttpResponse("Error Detected, Request Failed", content_type="text/plain")
+            # else:
+            #     # switch to a new master to complete the pending transaction
+            #     detect(request)
+            #     switch_master(SERVER_IP_LIST[MASTER])
+            #     for i,ip in enumerate(SERVER_IP_LIST):
+            #         if i != MASTER:
+            #             send_checkpoint(ip)
+            #     return HttpResponse("Error Detected, Request Failed", content_type="text/plain")
     else:
         return HttpResponse("Make Transaction Cannot Accept GET Request", content_type="text/plain")
 
 def detect(request):
-    global MASTER
+    global MASTER, LOCK
+    LOCK.acquire()
     prev_master = MASTER
     alive_count = 0
     alive_IP = []
@@ -112,15 +128,18 @@ def detect(request):
         while master[new_master] == 0:
             new_master = (new_master + 1) % len(master)
             MASTER = new_master
+    print(MASTER)
+    LOCK.release()
     return JsonResponse({'alive_count': str(alive_count), 'dead_count': str(dead_count), 
         'alive_IP': alive_IP, 'dead_IP': dead_IP, 'master': MASTER})
 
 def send_checkpoint(ip):
-    global REQ_RECORD
+    global REQ_RECORD, LOCK
+    record = json.dumps(REQ_RECORD)
     try:
-        payload = {'checkpoint':REQ_RECORD}
-        response = requests.post(ip+'/update_checkpoint', json=payload)
-        print("server: "+ip+" update finished!")
+        payload = {'checkpoint':record, 'server_ip':ip}
+        response = requests.post(ip+'/update', data=payload)
+        print("server: "+ip+" update succeded!")
     except:
         print("server: "+ip+" update failed!")
 

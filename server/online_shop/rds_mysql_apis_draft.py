@@ -2,12 +2,12 @@ import json
 import mysql.connector
 
 
-def get_maxid(host):
+def get_maxid():
     """
     get the largest transaction_id from transaction table, first time call it will return 1000
     :return: the largest transaction_id
     """
-    cnx = mysql.connector.connect(user="root", password="Jiang0814", host=host)
+    cnx = mysql.connector.connect(user='root', password='Jiang0814', host='35.185.39.95')
     cursor = cnx.cursor()
     cursor.execute("USE rds")
     cursor.execute("SELECT COUNT(transaction_id) from transaction")
@@ -25,13 +25,13 @@ def get_maxid(host):
     return result
 
 
-def get_remains(product_type, host):
+def get_remains(product_type):
     """
     get remain number of a certain product
     :param product_type: the type you want to query, it should be a string('shoes' or 'pants')
     :return: the number of this product
     """
-    cnx = mysql.connector.connect(user="root", password="Jiang0814", host=host)
+    cnx = mysql.connector.connect(user='root', password='Jiang0814', host='35.185.39.95')
     cursor = cnx.cursor()
     cursor.execute("USE rds")
     cursor.execute("SELECT remains FROM inventory WHERE product_type = '" + product_type + "'")
@@ -41,7 +41,7 @@ def get_remains(product_type, host):
     print(remain_result)
     return remain_result
 
-def insert_transaction(dic, host):
+def insert_transaction(dic):
     """
     insert a transaction record to the transaction table
     will ignore duplicated transaction id and catch exception
@@ -49,7 +49,7 @@ def insert_transaction(dic, host):
     :return: a direction which shows the remain number of the product you insert
              (product_type, number). number = -1 if the insert operation is wrong
     """
-    cnx = mysql.connector.connect(user="root", password="Jiang0814", host=host)
+    cnx = mysql.connector.connect(user='root', password='Jiang0814', host='35.185.39.95')
     cursor = cnx.cursor()
     cursor.execute("USE rds")
     add_transaction = ("INSERT INTO transaction "

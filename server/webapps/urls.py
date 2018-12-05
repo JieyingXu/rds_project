@@ -23,5 +23,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     url(r'^home$', views.home,name='home'),
     url(r'^make_transaction$', views.make_transaction, name='make_transaction'),
-    url(r'^detect$', views.detect, name='detect')
+    url(r'^detect$', views.detect, name='detect'),
+    url(r'^update$', views.update, name='update'),
 ]
