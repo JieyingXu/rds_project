@@ -7,6 +7,7 @@ import os, json
 
 # Create your views here.
 SERVER_IP_LIST = ["http://127.0.0.1:8008", "http://127.0.0.1:8080", "http://127.0.0.1:8800"]
+LIVING = [1, 1, 1]
 MASTER = 0
 LOCK = threading.Lock()
 MASTER_SWITCH = 0
@@ -14,6 +15,7 @@ MASTER_SWITCH = 0
 # 'type', 'number', 'id'
 REQ_RECORD = []
 CHECKPOINT_FILE = os.path.join('.', 'proxy_checkpoint.csv')
+
 
 class CheckPointThread(threading.Thread):
     def run(self):
@@ -27,7 +29,7 @@ class CheckPointThread(threading.Thread):
             if MASTER_SWITCH == 0:
                 new_master = MASTER
                 for i,ip in enumerate(SERVER_IP_LIST):
-                    if i != new_master:
+                    if i != new_master and LIVING[i] == 1:
                         send_checkpoint(ip)
                 with open(CHECKPOINT_FILE, 'a') as f:
                     for transaction in REQ_RECORD:
@@ -39,6 +41,7 @@ class CheckPointThread(threading.Thread):
 
 thread1 = CheckPointThread()
 thread1.start()
+
 
 def home(request):
     # interval = request.GET.get('interval')
@@ -102,49 +105,86 @@ def make_transaction(request):
     else:
         return HttpResponse("Make Transaction Cannot Accept GET Request", content_type="text/plain")
 
+
 def detect(request):
-    global MASTER, LOCK
+    global MASTER, LOCK,LIVING
     LOCK.acquire()
-    prev_master = MASTER
-    alive_count = 0
-    alive_IP = []
-    master = []
+    
+    prev_master, prev_living = MASTER, LIVING
+    alive_count, alive_IP, new_living = 0, [], []
+    
+    # Get new living IP status.
     for ip in SERVER_IP_LIST:
         try:
             requests.get(ip+'/detect')
             alive_count += 1
-            master.append(1)
+            new_living.append(1)
             alive_IP.append(ip)
         except:
-            master.append(0)
+            new_living.append(0)
             continue
+    LIVING = new_living
     dead_count = len(SERVER_IP_LIST) - alive_count
     dead_IP = []
     for ip in SERVER_IP_LIST:
         if ip not in alive_IP:
             dead_IP.append(ip)
-    if master[prev_master] == 0:
+
+    # Elect new master if previous master is dead now.
+    if new_living[prev_master] == 0:
         new_master = prev_master
-        while master[new_master] == 0:
-            new_master = (new_master + 1) % len(master)
+        while new_living[new_master] == 0:
+            new_master = (new_master + 1) % len(new_living)
             MASTER = new_master
-    print(MASTER)
+
+    # Let coming back server catch up with checkpoint.
+    for i in range(len(new_living)):
+        pre, now = prev_living[i], new_living[i]
+        if pre == 0 and now == 1:
+            catchup(SERVER_IP_LIST[i])
+            print("Reviving server: %s catched up!" % SERVER_IP_LIST[i])
+    # print(MASTER)
     LOCK.release()
     return JsonResponse({'alive_count': str(alive_count), 'dead_count': str(dead_count), 
         'alive_IP': alive_IP, 'dead_IP': dead_IP, 'master': MASTER})
 
-def send_checkpoint(ip):
-    global REQ_RECORD, LOCK
-    record = json.dumps(REQ_RECORD)
+
+def send_checkpoint(ip, record=None):
+    global REQ_RECORD
+    if record == None:
+        new_record = json.dumps(REQ_RECORD)
+    else:
+        new_record = json.dumps(record)
     try:
-        payload = {'checkpoint':record, 'server_ip':ip}
+        payload = {'checkpoint':new_record, 'server_ip':ip}
         response = requests.post(ip+'/update', data=payload)
-        print("server: "+ip+" update succeded!")
+        if record == None:
+            print("server: "+ip+" update succeded!")
     except:
         print("server: "+ip+" update failed!")
 
-def switch_master(ip):
-    pass
+
+def catchup(ip):
+    payload = {'server_ip':ip}
+    response = requests.post(ip+'/get_current_record', data=payload)
+    json_res = response.json()
+    max_id = str(json_res['max_id'])
+    req_record = []
+    with open(CHECKPOINT_FILE, 'r') as f:
+        transaction_id = "-1"
+        while (transaction_id != max_id):
+            line = f.readline().strip()
+            transaction_id = str(line.split(',')[0])
+        line = f.readline().strip()
+        while (line):
+            print(line)
+            l = line.split(',')
+            new_record = {}
+            new_record['id'], new_record['type'], new_record['number'] = l[0],l[1],l[2]
+            req_record.append(new_record)
+            line = f.readline().strip()
+    send_checkpoint(ip, req_record)
+
 
 
 
