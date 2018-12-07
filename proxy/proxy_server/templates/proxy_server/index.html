@@ -16,10 +16,12 @@
 					type: "GET",
 					dataType: "json",
 					success : function(data) {
-						document.getElementById("shoes_number").innerHTML = data.shoes_number;
-						document.getElementById("pants_number").innerHTML = data.pants_number;
-						document.getElementById("message").innerHTML = data.message;
-						document.getElementById("transaction_button").disabled = false;
+						if (data.code === "yes") {
+							document.getElementById("shoes_number").innerHTML = data.shoes_number;
+							document.getElementById("pants_number").innerHTML = data.pants_number;
+							document.getElementById("message").innerHTML = data.message;
+							document.getElementById("transaction_button").disabled = false;
+						}			
 					}
 				});
 			};

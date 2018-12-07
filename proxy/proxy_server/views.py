@@ -9,37 +9,59 @@ import os, json
 # SERVER_IP_LIST = ["http://127.0.0.1:8008", "http://127.0.0.1:8080", "http://127.0.0.1:8800"]
 SERVER_IP_LIST = ["http://127.0.0.1:8008", "http://127.0.0.1:8080"]
 
-LIVING = [1, 1, 1]
-MASTER = 0
-LOCK = threading.Lock()
-# MASTER_SWITCH = 0
+# Mapping the status of server in the SERVER_IP_LIST, 1 is alive, 0 is dead.
+LIVING = [1] * len(SERVER_IP_LIST)
 
-# transaction record inside the list is dictionary with keys:
-# 'type', 'number', 'id'
+# Current master replica's index in the SERVER_IP_LIST.
+MASTER = 0
+
+# Use this global lock to ensure atomic operations in checkpointing, make_transaction and detect
+LOCK = threading.Lock()
+
+# Log transaction records inside the list is dictionary with keys:
+''' 'type', 'number', 'id' '''
 REQ_RECORD = []
+
+# Record the corresponding client identifier (ip_browser) of pending request.
 REQUESTS = []
+
+# Key is client identifier, value is result dictionary of finished pending transaction.
 UPDATES = {}
+
+# File path of checkpoint file.
 CHECKPOINT_FILE = os.path.join('.', 'proxy_checkpoint.csv')
 
+# Checkpointing interval in seconds
+CHECKPOINT_INTERVAL = 10
 
+
+# A independent thread that is going to send the transaction records in REQ_RECORD to 
+# all living slave replicas and then write them into local csv file.
 class CheckPointThread(threading.Thread):
     def run(self):
         while True:
             global SERVER_IP_LIST, LOCK, REQ_RECORD, MASTER, REQUESTS, UPDATES
-            time.sleep(10)
+            time.sleep(CHECKPOINT_INTERVAL)
             
             LOCK.acquire()
+
+            # Flag to mark if there is pending transaction in log list.
             pending = False
             for i,transaction_record in enumerate(REQ_RECORD):
                 if transaction_record['id'] == -1:
                     pending = True
                     break
             
+            # If there is pending transaction in log list, abort this checkpointing section, wait
+            # after the heartbeat to finish the pending transaction first.
             if not pending:
                 new_master = MASTER
                 for i,ip in enumerate(SERVER_IP_LIST):
+                    # Only send all completed transactions logs to living slave replicas.
                     if i != new_master and LIVING[i] == 1:
                         send_checkpoint(ip)
+
+                # Write logs into checkpoint and discard the logs after writing.
                 with open(CHECKPOINT_FILE, 'a') as f:
                     for transaction in REQ_RECORD:
                         row = "%s,%s,%s\n" % (transaction["id"], transaction["type"], transaction["number"])
@@ -50,16 +72,17 @@ class CheckPointThread(threading.Thread):
 
             LOCK.release()
             
-
+# Start the thread.
 thread1 = CheckPointThread()
 thread1.start()
 
 
+# The home page of online shop. Query the master replica's database to first get the numbers.
 def home(request):
     # interval = request.GET.get('interval')
     global SERVER_IP_LIST, MASTER
     ip = SERVER_IP_LIST[MASTER]
-    print(request.META['REMOTE_ADDR'])
+    # print(request.META['REMOTE_ADDR'])
     try:
         payload = {'server_ip':ip}
         response = requests.post(ip+'/home', data=payload)
@@ -75,6 +98,8 @@ def home(request):
         return HttpResponse("Primary server dead!", content_type="text/plain")
 
 
+# When user submit the form, make_transaction will be called.
+# It is atomic transaction guranteed by LOCK.
 def make_transaction(request):
     global MASTER, LOCK, REQUESTS, REQ_RECORD
     LOCK.acquire()
@@ -83,6 +108,8 @@ def make_transaction(request):
         if form.is_valid():
             product_type, number = form.cleaned_data['product_type'], form.cleaned_data['product_number']
             new_record = {}
+
+            # Transaction id is first assigned to -1.
             new_record["type"], new_record["number"], new_record["id"] = product_type, number, -1
             ip = SERVER_IP_LIST[MASTER]
             response = None
@@ -93,6 +120,7 @@ def make_transaction(request):
             except:
                 print('Queried server is dead!')
             
+            # Transaction succeeded, give the transaction record correct id.
             if response != None: 
                 json_res = response.json()
                 new_record['id'] = json_res["transaction_id"]
@@ -111,19 +139,20 @@ def make_transaction(request):
                 REQUESTS.append(None)
                 LOCK.release()
                 return render(request, 'proxy_server/index.html', context)
+            # Pending request will mark transaction id as -1 and record its client identifier,
+            # wait for next heartbeat to assign new master to finish the pending transaction.
             else:
-                # switch to a new master to complete the pending transaction
                 new_record['id'] = -1
                 context = {}
-                # context["identifier"] = request.META["REMOTE_ADDR"]+"_"+request.META["HTTP_USER_AGENT"]
                 identifier = request.META["REMOTE_ADDR"]+"_"+request.META["HTTP_USER_AGENT"]
+                # Use this flag to disable front end submit button to prevent further transaction request.
                 context["flag"] = False
-                context["form"] = TransactionForm() # Have another form that disable submit button.
+                context["form"] = TransactionForm()
                 context["shoes_number"] = "..."
                 context["pants_number"] = "..."
-                context["message"] = "Transaction Pending..." # disable frontend input and mark this as red
+                context["message"] = "Transaction Pending..."
                 REQ_RECORD.append(new_record)
-                REQUESTS.append(identifier)
+                REQUESTS.append(identifier) # Record corresponding client identifier.
                 LOCK.release()
                 return render(request, 'proxy_server/index.html', context)
     else:
@@ -131,6 +160,7 @@ def make_transaction(request):
         return HttpResponse("Make Transaction Cannot Accept GET Request", content_type="text/plain")
 
 
+# Heartbeat function called by fronted AJAX with configurable interval.
 def detect(request):
     global MASTER,LOCK,LIVING,REQ_RECORD,REQUESTS
     LOCK.acquire()
@@ -155,30 +185,43 @@ def detect(request):
         if ip not in alive_IP:
             dead_IP.append(ip)
 
+    # No matter if the master has changed, pending transaction needs to be processed first.
+    # Possible situation: Master dies and comes back during a heaartbeat interval.
+    for i,transaction_record in enumerate(REQ_RECORD):
+        if transaction_record['id'] == -1:
+            # ip = SERVER_IP_LIST[MASTER]
+            finish_pending(ip, i, transaction_record['type'], transaction_record['number'])
+
     # Elect new master if previous master is dead now.
-    # Check if there is any pending transaction.
+    # Check if there is any pending transaction, finish pending transaction and
+    # change the transactin id to correct value.
+    # Send current log list to new master to make sure it catches up with previous
+    # master before starting to process new request.
     if new_living[prev_master] == 0:
         new_master = prev_master
         while new_living[new_master] == 0:
             new_master = (new_master + 1) % len(new_living)
             MASTER = new_master
+        prev_checkpoint = []
+        ip = SERVER_IP_LIST[MASTER]
         for i,transaction_record in enumerate(REQ_RECORD):
-            if transaction_record['id'] == -1:
-                ip = SERVER_IP_LIST[MASTER]
-                finish_pending(ip, i, transaction_record['type'], transaction_record['number'])
+            prev_checkpoint.append(transaction_record)
+        send_checkpoint(ip, prev_checkpoint)
 
-    # Let coming back server catch up with checkpoint.
+    # Let previous dead now alive server catch up with local checkpoint file.
     for i in range(len(new_living)):
         pre, now = prev_living[i], new_living[i]
         if pre == 0 and now == 1:
             catchup(SERVER_IP_LIST[i])
             print("Reviving server: %s catched up!" % SERVER_IP_LIST[i])
-    # print(MASTER)
+    
     LOCK.release()
     return JsonResponse({'alive_count': str(alive_count), 'dead_count': str(dead_count), 
         'alive_IP': alive_IP, 'dead_IP': dead_IP, 'master': MASTER})
 
 
+# Finish pending transaction in the log in heartbeat
+# Modify log's transaction ID and put results into UPDATES (client identifier: result)
 def finish_pending(ip, i, product_type, product_number):
     # Modify REQ_RECORD transation ID and change REQUESTS corresponding slot to None.
     payload = {'product_type':product_type, 'product_number':product_number, 'server_ip':ip}
@@ -186,10 +229,7 @@ def finish_pending(ip, i, product_type, product_number):
         response = requests.post(ip+'/make_transaction', data=payload)
         json_res = response.json()
         new_record = {'type':product_type, 'number':product_number, 'id':json_res["transaction_id"]}
-        # new_record['id'] = json_res["transaction_id"]
-        # context = {}
-        # context["flag"] = True
-        # context["form"] = TransactionForm()
+        
         new_response = {}
         new_response["shoes_number"] = json_res["shoes_number"]
         new_response["pants_number"] = json_res["pants_number"]
@@ -202,13 +242,15 @@ def finish_pending(ip, i, product_type, product_number):
         # return render(request, 'proxy_server/index.html', context)
     except:
         print("Finish pending transaction failed!")
-        # return 
 
 
+# Frontend AJAX call this function when the message is showing "Transaction Pending..."
+# to update frontend relevant fields with updated value after finishing pending transaction.
 def update_pending(request):
     global UPDATES,LOCK
     LOCK.acquire()
     identifier = request.META["REMOTE_ADDR"]+"_"+request.META["HTTP_USER_AGENT"]
+    # If the updated transaction results is available.
     if identifier in UPDATES:
         response = UPDATES[identifier]
         response["code"] = "yes"
@@ -220,7 +262,8 @@ def update_pending(request):
         LOCK.release()
         return JsonResponse(response)
 
-
+# Send transaction records to designated ip and 
+# let server update their database.
 def send_checkpoint(ip, record=None):
     global REQ_RECORD
     if record == None:
@@ -232,12 +275,12 @@ def send_checkpoint(ip, record=None):
     try:
         payload = {'checkpoint':new_record, 'server_ip':ip}
         response = requests.post(ip+'/update', data=payload)
-        if record == None:
-            print("server: "+ip+" update succeded!")
+        print("server: "+ip+" update succeded!")
     except:
         print("server: "+ip+" update failed!")
 
-
+# When a previous dead server revives, it needs to catch up with current checkpoint
+# by updating records inside checkpoint csv files. Catchup is done in heartbeat.
 def catchup(ip):
     payload = {'server_ip':ip}
     response = requests.post(ip+'/get_current_record', data=payload)
@@ -246,6 +289,7 @@ def catchup(ip):
     req_record = []
     with open(CHECKPOINT_FILE, 'r') as f:
         transaction_id = "-1"
+        # Find the start line of record to begin catching up.
         while (transaction_id != max_id):
             line = f.readline().strip()
             transaction_id = str(line.split(',')[0])
