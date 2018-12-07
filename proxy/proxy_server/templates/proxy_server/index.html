@@ -10,25 +10,49 @@
 			window.onload = update;
 			var refresh_interval = 3;
 			// var set_interval = window.setInterval(update, 1000 * refresh_interval);
+			var update_pending = function() {
+				$.ajax({
+					url: "/update_pending",
+					type: "GET",
+					dataType: "json",
+					success : function(data) {
+						document.getElementById("shoes_number").innerHTML = data.shoes_number;
+						document.getElementById("pants_number").innerHTML = data.pants_number;
+						document.getElementById("message").innerHTML = data.message;
+						document.getElementById("transaction_button").disabled = false;
+					}
+				});
+			};
+
 			var update = function() {
 				$.ajax({
 					url: "/detect",
 					type: "GET",
 					dataType: "json",
 					success : function(data) {
-						var alive = data.alive_count;
-						var dead = data.dead_count;
-						var res_alive_ip = data.alive_IP;
-						var res_dead_ip = data.dead_IP;
-						console.log("alive:"+alive);
-						document.getElementById("alive_count").innerHTML = alive;
-						document.getElementById("dead_count").innerHTML = dead;
-						document.getElementById("alive_ip_addr").innerHTML = res_alive_ip;
-						document.getElementById("dead_ip_addr").innerHTML = res_dead_ip;
+						// console.log("alive:"+alive);
+						document.getElementById("alive_count").innerHTML = data.alive_count;
+						document.getElementById("dead_count").innerHTML = data.dead_count;
+						document.getElementById("alive_ip_addr").innerHTML = data.alive_IP;
+						document.getElementById("dead_ip_addr").innerHTML = data.dead_IP;
 						document.getElementById("master").innerHTML = data.master;
+						var message_element = document.getElementById("message");
+						// console.log(message_element == null);
+						// if (message_element != null) {
+						// 	console.log("message is not null!");
+						// 	console.log("html:");
+						// 	console.log(message_element.innerHTML);
+						// 	console.log("Transaction Pending...");
+						// }
+						// console.log(message_element.innerHTML === "Transaction Pending...");
+						if (message_element != null && message_element.innerHTML === "Transaction Pending...") {
+							console.log("enter pending transaction..");
+							update_pending();
+						}
 					}
 				});
 			};
+
 			update();
 			var set_interval = window.setInterval(update, 1000 * refresh_interval);
 
@@ -47,31 +71,34 @@
 			Virtual Online Shop
 		</h2>
 
+		<!-- {% if identifier %}
+			<input type="hidden" value="{{ identifier }}">
+		{% endif %} -->
+
 	    {% if message %}
             <br />
-	        <div class="message" style="color:blue;">
-	            {{ message }}
-	        </div>
+	        <div style="color:blue;" id="message">{{ message }}</div>
 	    {% endif %}
 
         <br />
 	    <div class="content">
-		    <form method="post" action="{% url 'make_transaction' %}">
+        	<form method="post" action="{% url 'make_transaction' %}">
 		        <table>
 		            {% for field in form.visible_fields %}
 		                <tr>
 		                    <td>{{ field.label_tag }}</td>
 		                    <td>{{ field }}</td>
-		                    <!-- <td class="error">
-{#		                        {% for error in field.errors %} {{error}} {% endfor %}#}
-		                    </td> -->
 		                </tr>
 		            {% endfor %}
 		        </table>
-                <input type="submit">
-            {% csrf_token %}
-            </form>
-
+		        {% if flag is True %}
+            	<input type="submit" id="transaction_button">
+            	{% else %}
+            	<input type="submit" id="transaction_button" disabled>
+            	{% endif %}
+        	{% csrf_token %}
+        	</form>
+		    
             <br />
             <br />
         	<table>
@@ -95,11 +122,11 @@
                 <tr><td id="master"></td></tr>
         		<tr>
         			<td>Remaining Shoes:</td>
-        			<td>{{ shoes_number }}</td>
+        			<td id="shoes_number">{{ shoes_number }}</td>
         		</tr>
         		<tr>
         			<td>Remaining Pants:</td>
-        			<td>{{ pants_number }}</td>
+        			<td id="pants_number">{{ pants_number }}</td>
         		</tr>
         	</table>
 

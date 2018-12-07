@@ -55,6 +55,7 @@ def update(request):
     remains = request.POST.get('checkpoint')
     server_ip = request.POST.get('server_ip')
     req_record = json.loads(remains)
+    print("Proxy checkpoint:", req_record)
     for transaction in req_record:
         transaction_row = {}
         transaction_row['transaction_id'] = transaction["id"]
@@ -62,5 +63,14 @@ def update(request):
         transaction_row['number'] = transaction["number"]
         insert_transaction(transaction_row, SQL_CONFIG.get(server_ip))
     return JsonResponse({'code':'1'})
+
+@csrf_exempt
+def get_current_record(request):
+    server_ip = request.POST.get('server_ip')
+    max_id = get_maxid(SQL_CONFIG.get(server_ip))
+    print('server_ip: ', server_ip, 'max_id: ', max_id)
+    return JsonResponse({'max_id':max_id})
+
+
 
 

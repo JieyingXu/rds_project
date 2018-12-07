@@ -24,7 +24,8 @@ urlpatterns = [
     # url(r'^home/(?P<interval>\d)+$', views.home,name='home'),
     url(r'^home$', views.home,name='home'),
     url(r'^make_transaction$', views.make_transaction, name='make_transaction'),
-    url(r'^detect$', views.detect, name='detect')
+    url(r'^detect$', views.detect, name='detect'),
+    url(r'^update_pending$', views.update_pending, name='update_pending'),
     ]
 #     url(r'^test$', views.test, name='detect')
 # ]

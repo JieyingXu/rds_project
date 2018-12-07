@@ -25,4 +25,5 @@ urlpatterns = [
     url(r'^make_transaction$', views.make_transaction, name='make_transaction'),
     url(r'^detect$', views.detect, name='detect'),
     url(r'^update$', views.update, name='update'),
+    url(r'^get_current_record$', views.get_current_record, name='get_current_record'),
 ]
