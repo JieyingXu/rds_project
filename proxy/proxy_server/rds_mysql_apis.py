@@ -15,7 +15,7 @@ def get_maxid(host):
         temp = count
     count_result = temp[0]
     if count_result == 0:
-        result = 1000
+        result = 0
         return result
     else:
         cursor.execute("SELECT MAX(transaction_id) from transaction")

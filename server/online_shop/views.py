@@ -21,30 +21,30 @@ def home(request):
     print("From server:", context)
     return JsonResponse(context)
 
-@csrf_exempt
-def make_transaction(request):
-    if request.method == 'POST':
-        product_type = request.POST.get('product_type')
-        product_number = request.POST.get('product_number')
-        server_ip = request.POST.get('server_ip')
-        print("From Server: product type->%s, product number->%s" % (product_type, product_number))
-        transaction_row = {}
-        max_id_plus1 = get_maxid(SQL_CONFIG.get(server_ip)) + 1
-        transaction_row['transaction_id'] = max_id_plus1
-        transaction_row['product_type'] = product_type
-        transaction_row['number'] = int(product_number)
+# @csrf_exempt
+# def make_transaction(request):
+#     if request.method == 'POST':
+#         product_type = request.POST.get('product_type')
+#         product_number = request.POST.get('product_number')
+#         server_ip = request.POST.get('server_ip')
+#         print("From Server: product type->%s, product number->%s" % (product_type, product_number))
+#         transaction_row = {}
+#         max_id_plus1 = get_maxid(SQL_CONFIG.get(server_ip)) + 1
+#         transaction_row['transaction_id'] = max_id_plus1
+#         transaction_row['product_type'] = product_type
+#         transaction_row['number'] = int(product_number)
 
-        response = insert_transaction(transaction_row, SQL_CONFIG.get(server_ip))
-        remain_shoes_number = get_remains("shoes", SQL_CONFIG.get(server_ip))
-        remain_pants_number = get_remains("pants", SQL_CONFIG.get(server_ip))
+#         response = insert_transaction(transaction_row, SQL_CONFIG.get(server_ip))
+#         remain_shoes_number = get_remains("shoes", SQL_CONFIG.get(server_ip))
+#         remain_pants_number = get_remains("pants", SQL_CONFIG.get(server_ip))
 
-        context = {}
-        context["code"] = response['number']
-        context["shoes_number"] = remain_shoes_number
-        context["pants_number"] = remain_pants_number
-        context["transaction_id"] = max_id_plus1
-        print("From server:", context)
-        return JsonResponse(context)
+#         context = {}
+#         context["code"] = response['number']
+#         context["shoes_number"] = remain_shoes_number
+#         context["pants_number"] = remain_pants_number
+#         context["transaction_id"] = max_id_plus1
+#         print("From server:", context)
+#         return JsonResponse(context)
 
 def detect(request):
     # print("I am alive!")
@@ -63,6 +63,25 @@ def update(request):
         transaction_row['number'] = transaction["number"]
         insert_transaction(transaction_row, SQL_CONFIG.get(server_ip))
     return JsonResponse({'code':'1'})
+
+
+@csrf_exempt
+def update_single(request):
+    transaction_row = {}
+    transaction_row['transaction_id'] = request.POST.get('transaction_id')
+    transaction_row['product_type'] = request.POST.get('product_type')
+    transaction_row['number'] = request.POST.get('number')
+    server_ip = request.POST.get('server_ip')
+    response = insert_transaction(transaction_row, SQL_CONFIG.get(server_ip))
+    remain_shoes_number = get_remains("shoes", SQL_CONFIG.get(server_ip))
+    remain_pants_number = get_remains("pants", SQL_CONFIG.get(server_ip))
+    context = {}
+    context["code"] = response["number"]
+    context["shoes_number"] = remain_shoes_number
+    context["pants_number"] = remain_pants_number
+    context["transaction_id"] = transaction_row['transaction_id']
+    return JsonResponse(context)
+
 
 @csrf_exempt
 def get_current_record(request):

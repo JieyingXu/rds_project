@@ -8,7 +8,7 @@
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 		<script type="text/javascript">
 			window.onload = update;
-			var refresh_interval = 20;
+			var refresh_interval = 10;
 			// var set_interval = window.setInterval(update, 1000 * refresh_interval);
 			var update_pending = function() {
 				$.ajax({
@@ -21,8 +21,7 @@
 							document.getElementById("pants_number").innerHTML = data.pants_number;
 							document.getElementById("message").innerHTML = data.message;
 							document.getElementById("transaction_button").disabled = false;
-						}
-						console.log("Finish update pending...")			
+						}			
 					}
 				});
 			};
@@ -40,6 +39,14 @@
 						document.getElementById("dead_ip_addr").innerHTML = data.dead_IP;
 						document.getElementById("master").innerHTML = data.master;
 						var message_element = document.getElementById("message");
+						// console.log(message_element == null);
+						// if (message_element != null) {
+						// 	console.log("message is not null!");
+						// 	console.log("html:");
+						// 	console.log(message_element.innerHTML);
+						// 	console.log("Transaction Pending...");
+						// }
+						// console.log(message_element.innerHTML === "Transaction Pending...");
 						if (message_element != null && message_element.innerHTML === "Transaction Pending...") {
 							console.log("enter pending transaction..");
 							update_pending();

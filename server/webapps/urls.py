@@ -22,8 +22,9 @@ from online_shop import views
 urlpatterns = [
     path('admin/', admin.site.urls),
     url(r'^home$', views.home,name='home'),
-    url(r'^make_transaction$', views.make_transaction, name='make_transaction'),
+    # url(r'^make_transaction$', views.make_transaction, name='make_transaction'),
     url(r'^detect$', views.detect, name='detect'),
     url(r'^update$', views.update, name='update'),
+    url(r'^update_single$', views.update_single, name='update_single'),
     url(r'^get_current_record$', views.get_current_record, name='get_current_record'),
 ]

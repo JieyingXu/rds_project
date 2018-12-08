@@ -7,14 +7,17 @@ import threading, time
 import os, json
 
 # Create your views here.
-# SERVER_IP_LIST = ["http://127.0.0.1:8008", "http://127.0.0.1:8080", "http://127.0.0.1:8800"]
-SERVER_IP_LIST = ["http://127.0.0.1:8008", "http://127.0.0.1:8080"]
+SERVER_IP_LIST = ["http://127.0.0.1:8008", "http://127.0.0.1:8080", "http://127.0.0.1:8800"]
+# SERVER_IP_LIST = ["http://127.0.0.1:8008", "http://127.0.0.1:8080"]
 
 # Mapping the status of server in the SERVER_IP_LIST, 1 is alive, 0 is dead.
 LIVING = [1] * len(SERVER_IP_LIST)
 
 # Current master replica's index in the SERVER_IP_LIST.
 MASTER = 0
+
+# Sequence number
+SEQUENCE_NUMBER = 0
 
 # Use this global lock to ensure atomic operations in checkpointing, make_transaction and detect
 LOCK = threading.Lock()
@@ -52,6 +55,7 @@ class CheckPointThread(threading.Thread):
             LOCK.acquire()
 
             # Flag to mark if there is pending transaction in log list.
+            # print('checkpoint')
             pending = False
             print("REQ_RECORD:",REQ_RECORD)
             print("COMPLETED:",COMPLETED)
@@ -110,21 +114,23 @@ def home(request):
 # When user submit the form, make_transaction will be called.
 # It is atomic transaction guranteed by LOCK.
 def make_transaction(request):
-    global MASTER, LOCK, REQUESTS, REQ_RECORD, COMPLETED
+    global MASTER, LOCK, REQUESTS, REQ_RECORD, COMPLETED, SEQUENCE_NUMBER
     LOCK.acquire()
+    SEQUENCE_NUMBER += 1
     if request.method == 'POST':
         form = TransactionForm(request.POST)
         if form.is_valid():
             product_type, number = form.cleaned_data['product_type'], form.cleaned_data['product_number']
+            transaction_id = SEQUENCE_NUMBER
             new_record = {}
 
             # Transaction id is first assigned to -1.
-            new_record["type"], new_record["number"], new_record["id"] = product_type, number, -1
+            new_record["type"], new_record["number"], new_record["id"] = product_type, number,transaction_id
             ip = SERVER_IP_LIST[MASTER]
             response = None
             try:
-                payload = {'product_type':product_type, 'product_number':number, 'server_ip':ip}
-                response = requests.post(ip+'/make_transaction', data=payload)
+                payload = {'product_type':product_type, 'number':number,'transaction_id': transaction_id, 'server_ip':ip}
+                response = requests.post(ip+'/update_single', data=payload)
                 print('Queried server is alive!')
             except:
                 print('Queried server is dead!')
@@ -132,7 +138,6 @@ def make_transaction(request):
             # Transaction succeeded, give the transaction record correct id.
             if response != None: 
                 json_res = response.json()
-                new_record['id'] = json_res["transaction_id"]
                 context = {}
                 context["flag"] = True
                 context["form"] = TransactionForm()
@@ -142,7 +147,7 @@ def make_transaction(request):
                     context["message"] = 'Database Error: Insertion Failed!'
                 else:
                     context["message"] = 'Transaction %s: %s of %s Succeeded!' % \
-                    (new_record['id'], number, product_type)
+                    (transaction_id, number, product_type)
                 # Append it to current checkpoint list
                 REQ_RECORD.append(new_record)
                 COMPLETED.append("completed")
@@ -153,8 +158,8 @@ def make_transaction(request):
             # wait for next heartbeat to assign new master to finish the pending transaction.
             else:
                 # new_record['id'] = -1
-                anticipated_id = get_maxid(SQL_CONFIG.get(ip)) + 1
-                new_record['id'] = anticipated_id
+                # anticipated_id = get_maxid(SQL_CONFIG.get(ip)) + 1
+                # new_record['id'] = anticipated_id
                 context = {}
                 identifier = request.META["REMOTE_ADDR"]+"_"+request.META["HTTP_USER_AGENT"]
                 # Use this flag to disable front end submit button to prevent further transaction request.
@@ -198,39 +203,46 @@ def detect(request):
         if ip not in alive_IP:
             dead_IP.append(ip)
 
+    # if new_living[prev_master] != 0:
+    # No matter if the master has changed, pending transaction needs to be processed first.
+    # Possible situation: Master dies and comes back during a heaartbeat interval.
+    ip = SERVER_IP_LIST[MASTER]
+    for i,transaction_record in enumerate(REQ_RECORD):
+        if COMPLETED[i] == "pending":
+            # ip = SERVER_IP_LIST[MASTER]
+            finish_pending(ip, i, transaction_record['id'], transaction_record['type'], transaction_record['number'])
+
     # Elect new master if previous master is dead now.
     # Check if there is any pending transaction, finish pending transaction and
     # change the transactin id to correct value.
     # Send current log list to new master to make sure it catches up with previous
     # master before starting to process new request.
     if new_living[prev_master] == 0:
-        print('enter 207')
+        print('enter 215')
         new_master = prev_master
         while new_living[new_master] == 0:
             new_master = (new_master + 1) % len(new_living)
             MASTER = new_master
         print(MASTER)
-        master_ip = SERVER_IP_LIST[MASTER]
+        # prev_checkpoint = []
+        # # ip = SERVER_IP_LIST[MASTER]
+        # for i,transaction_record in enumerate(REQ_RECORD):
+        #     prev_checkpoint.append(transaction_record)
+        # send_checkpoint(ip, prev_checkpoint)
         for i,transaction_record in enumerate(REQ_RECORD):
             if COMPLETED[i] == "pending":
-                finish_pending(ip, i, transaction_record['id'], transaction_record['type'], transaction_record['number'])
-        # Only when the master has changed, new master need to catch up with log list first.
-        send_checkpoint(master_ip)
+                # ip = SERVER_IP_LIST[MASTER]
+                finish_pending(SERVER_IP_LIST[MASTER], i, transaction_record['id'], transaction_record['type'], transaction_record['number'])
+        send_checkpoint(SERVER_IP_LIST[MASTER])
+        # for i in range(len(COMPLETED)):
+        #     COMPLETED[i] = "completed"
 
-    # No matter if the master has changed, pending transaction needs to be processed first.
-    # Possible situation: Master dies and comes back during a heaartbeat interval.
-    else:    
-        master_ip = SERVER_IP_LIST[MASTER]
-        for i,transaction_record in enumerate(REQ_RECORD):
-            if COMPLETED[i] == "pending":
-                finish_pending(ip, i, transaction_record['id'], transaction_record['type'], transaction_record['number'])
-
-    
 
     # Let previous dead now alive server catch up with local checkpoint file.
     for i in range(len(new_living)):
         pre, now = prev_living[i], new_living[i]
         if pre == 0 and now == 1:
+            print('entering catch up...')
             catchup(SERVER_IP_LIST[i])
             print("Reviving server: %s catched up!" % SERVER_IP_LIST[i])
     
@@ -244,11 +256,11 @@ def detect(request):
 def finish_pending(ip, i, id, product_type, product_number):
     global SQL_CONFIG, REQ_RECORD, COMPLETED,UPDATES, REQUESTS
     # Modify REQ_RECORD transation ID and change REQUESTS corresponding slot to None.
-    payload = {'product_type':product_type, 'product_number':product_number, 'server_ip':ip}
+    payload = {'product_type':product_type, 'number':product_number, 'server_ip':ip, 'transaction_id':id}
     try:
         max_id = get_maxid(SQL_CONFIG.get(ip))
         if id != max_id:
-            response = requests.post(ip+'/make_transaction', data=payload)
+            response = requests.post(ip+'/update_single', data=payload)
             json_res = response.json()
             new_record = {'type':product_type, 'number':product_number, 'id':json_res["transaction_id"]}
             
@@ -316,20 +328,25 @@ def catchup(ip):
     response = requests.post(ip+'/get_current_record', data=payload)
     json_res = response.json()
     max_id = str(json_res['max_id'])
-    if max_id == 1000:
-        return 
+    # if max_id == 0:
+    #     return 
     req_record = []
     with open(CHECKPOINT_FILE, 'r') as f:
         line = f.readline().strip()
         if (line == ""):
-            return 
-        transaction_id = str(line.split(',')[0])
-        # Find the start line of record to begin catching up.
-        while (transaction_id != max_id):
-            line = f.readline().strip()
+            return
+        print('max_id:', max_id)
+        if max_id != '0':
+            print('enter max_id != 0 block...')
             transaction_id = str(line.split(',')[0])
-        line = f.readline().strip()
+            # Find the start line of record to begin catching up.
+            while (transaction_id != max_id):
+                print('enter transaction_id != max_id block...')
+                line = f.readline().strip()        
+                transaction_id = str(line.split(',')[0])
+        
         while (line):
+            print("inside line while loop...")
             print(line)
             l = line.split(',')
             new_record = {}
