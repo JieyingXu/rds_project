@@ -8,7 +8,7 @@
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 		<script type="text/javascript">
 			window.onload = update;
-			var refresh_interval = 3;
+			var refresh_interval = 20;
 			// var set_interval = window.setInterval(update, 1000 * refresh_interval);
 			var update_pending = function() {
 				$.ajax({
@@ -21,7 +21,8 @@
 							document.getElementById("pants_number").innerHTML = data.pants_number;
 							document.getElementById("message").innerHTML = data.message;
 							document.getElementById("transaction_button").disabled = false;
-						}			
+						}
+						console.log("Finish update pending...")			
 					}
 				});
 			};
@@ -39,14 +40,6 @@
 						document.getElementById("dead_ip_addr").innerHTML = data.dead_IP;
 						document.getElementById("master").innerHTML = data.master;
 						var message_element = document.getElementById("message");
-						// console.log(message_element == null);
-						// if (message_element != null) {
-						// 	console.log("message is not null!");
-						// 	console.log("html:");
-						// 	console.log(message_element.innerHTML);
-						// 	console.log("Transaction Pending...");
-						// }
-						// console.log(message_element.innerHTML === "Transaction Pending...");
 						if (message_element != null && message_element.innerHTML === "Transaction Pending...") {
 							console.log("enter pending transaction..");
 							update_pending();
@@ -58,13 +51,13 @@
 			update();
 			var set_interval = window.setInterval(update, 1000 * refresh_interval);
 
-			var get_interval = function() {
-				clearInterval(set_interval);
-				var new_interval = parseInt(document.getElementById("interval").value);
-				// console.log(new_interval);
-				set_interval = window.setInterval(update, 1000 * new_interval);
-				update();
-			}
+			// var get_interval = function() {
+			// 	clearInterval(set_interval);
+			// 	var new_interval = parseInt(document.getElementById("interval").value);
+			// 	// console.log(new_interval);
+			// 	set_interval = window.setInterval(update, 1000 * new_interval);
+			// 	update();
+			// }
 		</script>
 	</head>
 
@@ -104,11 +97,11 @@
             <br />
             <br />
         	<table>
-                <tr style="color:blue;">
+                <!-- <tr style="color:blue;">
                     <td>HeartBeat Interval:</td>
                     <td><input id="interval" type="text" value="3">seconds</td>
                     <td><button onclick="get_interval()">set</button></td>
-                </tr>
+                </tr> -->
                 <tr>
                 	<td  style="color:blue;">Number of running server:</td>
                 	<td id="alive_count"></td>
